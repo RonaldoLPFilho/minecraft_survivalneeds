@@ -1,0 +1,7 @@
+{
+  "model": {
+    "type": "minecraft:model",
+    "model": "survivalneeds:item/purified_water_bottle",
+    "tints": [ { "type": "minecraft:constant", "value": -11549705 } ]
+  }
+}

@@ -1,0 +1,20 @@
+{
+	"schemaVersion": 1,
+	"id": "survivalneeds",
+	"version": "${version}",
+	"name": "Survival Needs",
+	"description": "Sede, frio e medo para deixar a sobrevivência mais desafiadora.",
+	"authors": ["Ronaldo"],
+	"license": "CC0-1.0",
+	"environment": "*",
+	"entrypoints": {
+		"main": ["com.ronaldo.survivalneeds.SurvivalNeeds"],
+		"client": ["com.ronaldo.survivalneeds.client.SurvivalNeedsClient"]
+	},
+	"depends": {
+		"fabricloader": ">=0.19.5",
+		"minecraft": "~26.3",
+		"java": ">=25",
+		"fabric-api": "*"
+	}
+}
