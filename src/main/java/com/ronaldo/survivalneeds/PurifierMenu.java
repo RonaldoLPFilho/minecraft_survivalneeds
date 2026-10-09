@@ -67,9 +67,15 @@ public class PurifierMenu extends AbstractContainerMenu {
 		return data.get(WaterPurifierBlockEntity.DATA_USES);
 	}
 
+	/** Quantos usos 1 carvão dá (vem do servidor, pela configuração dele). */
+	public int getMaxUses() {
+		return Math.max(1, data.get(WaterPurifierBlockEntity.DATA_MAX_USES));
+	}
+
 	/** Progresso da garrafa atual, de 0.0 a 1.0. */
 	public float getProgress() {
-		return (float) data.get(WaterPurifierBlockEntity.DATA_PROGRESS) / WaterPurifierBlockEntity.PURIFY_TICKS;
+		int total = Math.max(1, data.get(WaterPurifierBlockEntity.DATA_PURIFY_TICKS));
+		return Math.min(1f, (float) data.get(WaterPurifierBlockEntity.DATA_PROGRESS) / total);
 	}
 
 	@Override

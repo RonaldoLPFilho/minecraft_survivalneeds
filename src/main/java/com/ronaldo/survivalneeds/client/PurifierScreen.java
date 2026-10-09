@@ -32,7 +32,7 @@ public class PurifierScreen extends AbstractContainerScreen<PurifierMenu> {
 		// Chama: altura proporcional aos usos de carvão que restam
 		int uses = menu.getUses();
 		if (uses > 0) {
-			int height = Mth.ceil((float) uses / WaterPurifierBlockEntity.USES_PER_COAL * 13f) + 1;
+			int height = Mth.ceil((float) uses / menu.getMaxUses() * 13f) + 1;
 			graphics.blitSprite(RenderPipelines.GUI_TEXTURED, FLAME, 14, 14, 0, 14 - height,
 				leftPos + 56, topPos + 36 + 14 - height, 14, height);
 		}
@@ -46,7 +46,7 @@ public class PurifierScreen extends AbstractContainerScreen<PurifierMenu> {
 	protected void extractLabels(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
 		super.extractLabels(graphics, mouseX, mouseY);
 		Component uses = Component.translatable("container.survivalneeds.water_purifier.uses",
-			menu.getUses(), WaterPurifierBlockEntity.USES_PER_COAL);
+			menu.getUses(), menu.getMaxUses());
 		graphics.text(font, uses, 79, 58, 4210752, false);
 	}
 }

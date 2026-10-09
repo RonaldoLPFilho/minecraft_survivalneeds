@@ -1,0 +1,23 @@
+package com.ronaldo.survivalneeds.mixin;
+
+import com.ronaldo.survivalneeds.FatigueSystem;
+import net.minecraft.world.attribute.BedRule;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Redirect;
+
+/**
+ * Cansado, o jogador não é acordado quando amanhece enquanto dorme: a checagem periódica "ainda dá para dormir
+ * agora?" passa a aceitar qualquer hora para ele.
+ */
+@Mixin(Player.class)
+public abstract class PlayerMixin {
+	@Redirect(
+		method = "tick",
+		at = @At(value = "INVOKE", target = "Lnet/minecraft/world/attribute/BedRule;canSleep(Lnet/minecraft/world/level/Level;)Z"))
+	private boolean survivalneeds$fatiguedKeepsSleeping(BedRule rule, Level level) {
+		return rule.canSleep(level) || FatigueSystem.canSleepAnytime((Player) (Object) this);
+	}
+}

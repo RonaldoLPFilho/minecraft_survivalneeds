@@ -7,67 +7,37 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import com.ronaldo.survivalneeds.config.SurvivalNeedsConfig;
+import com.ronaldo.survivalneeds.debuff.DebuffEffect;
+import com.ronaldo.survivalneeds.debuff.DebuffSystem;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.ai.attributes.AttributeInstance;
-import net.minecraft.world.entity.ai.attributes.AttributeModifier;
-import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
 /**
- * Medo: com a situação desfavorável, o jogador causa menos dano. Regras (qualquer uma ativa o medo):
+ * Medo: com a situação desfavorável, o jogador causa menos dano. Valores em {@code fear} na configuração.
+ * Regras (qualquer uma ativa o medo):
  * <ol>
- *   <li>Cercado por 3+ inimigos com arma inferior a ferro.</li>
- *   <li>Cercado por 10+ inimigos com arma inferior a diamante.</li>
+ *   <li>Cercado por poucos inimigos com arma fraca.</li>
+ *   <li>Cercado por uma horda com arma que não é de topo.</li>
  *   <li>Perto de um monstro forte, com pouco XP e pouca armadura.</li>
  *   <li>Perto de um chefe (Warden, Wither, Dragão), sem estar muito forte.</li>
- *   <li>Com pouca vida e 2+ inimigos por perto.</li>
- *   <li>No escuro, com 2+ inimigos por perto e arma fraca.</li>
+ *   <li>Com 1 coração de vida ou menos, sempre, sem olhar arma, XP nem inimigos.</li>
+ *   <li>Com 2 corações de vida ou menos e qualquer inimigo na região.</li>
+ *   <li>Com 3 corações de vida ou menos e alguns inimigos por perto.</li>
+ *   <li>No escuro, com alguns inimigos por perto e arma fraca.</li>
  * </ol>
  * Depois de ativado, o medo dura um tempo mínimo para não ficar piscando.
  */
 public final class FearSystem {
-	// Alcances
-	private static final double CROWD_RADIUS = 8.0;       // "cercado"
-	private static final double STRONG_RADIUS = 16.0;     // monstro forte
-	private static final double BOSS_RADIUS = 24.0;       // chefes
-
-	// Quem conta como ameaça
-	private static final float MIN_THREAT_HEALTH = 8.0f;  // ignora bichinhos (slime pequeno etc.)
-	private static final float STRONG_MIN_HEALTH = 40.0f; // Ravager, Warden, Wither, Elder Guardian...
-	private static final int STRONG_WEIGHT = 3;           // um monstro forte conta como 3 inimigos
-
-	// Cercado
-	private static final int SURROUNDED_FEW = 3;
-	private static final int SURROUNDED_MANY = 10;
-	private static final int TIER_IRON = 3;
-	private static final int TIER_DIAMOND = 4;
-
-	// Monstro forte / chefe: força do jogador que dispensa o medo
-	private static final int BRAVE_XP_LEVEL = 15;
-	private static final int BRAVE_ARMOR_VALUE = 10;
-	private static final int BOSS_BRAVE_XP_LEVEL = 30;
-	private static final int BOSS_BRAVE_ARMOR_VALUE = 15;
-
-	// Pouca vida / escuro
-	private static final float LOW_HEALTH = 6.0f; // 3 corações
-	private static final int DARK_LIGHT_LEVEL = 4;
-	private static final int TIER_STONE = 2;
-
-	private static final double DAMAGE_PENALTY = -0.5;    // -50% de dano
+	private static final String SOURCE = "fear";
 	private static final int CHECK_INTERVAL_TICKS = 10;
-	private static final int MIN_FEAR_DURATION_TICKS = 60; // 3 segundos
-
-	private static final Identifier FEAR_ID = SurvivalNeeds.id("fear_damage");
-	private static final AttributeModifier FEAR_MODIFIER =
-		new AttributeModifier(FEAR_ID, DAMAGE_PENALTY, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
 
 	private static final Map<Item, Integer> WEAPON_TIERS = new HashMap<>();
 
@@ -84,6 +54,10 @@ public final class FearSystem {
 	private static final Map<UUID, Long> FEAR_UNTIL = new HashMap<>(); // tick de jogo em que o medo pode acabar
 
 	private FearSystem() {}
+
+	private static SurvivalNeedsConfig.Fear cfg() {
+		return SurvivalNeedsConfig.get().fear;
+	}
 
 	private static void tier(int tier, Item... items) {
 		for (Item item : items) {
@@ -109,14 +83,12 @@ public final class FearSystem {
 		if (player.tickCount % CHECK_INTERVAL_TICKS == 0) {
 			refresh(player);
 		}
+		// Com medo o jogador causa menos dano
+		DebuffSystem.set(player, SOURCE, isAfraid(player),
+			() -> List.of(new DebuffEffect.DamageReduction(cfg().damageReduction)));
 	}
 
 	private static void refresh(ServerPlayer player) {
-		AttributeInstance damage = player.getAttribute(Attributes.ATTACK_DAMAGE);
-		if (damage == null) {
-			return;
-		}
-
 		UUID id = player.getUUID();
 		long now = player.level().getGameTime();
 
@@ -127,19 +99,17 @@ public final class FearSystem {
 			reason = findReason(player);
 		}
 		if (reason != null) {
-			FEAR_UNTIL.put(id, now + MIN_FEAR_DURATION_TICKS);
+			FEAR_UNTIL.put(id, now + SurvivalNeedsConfig.ticks(cfg().minFearSeconds));
 		}
 
 		boolean afraid = FORCED.contains(id) || FEAR_UNTIL.getOrDefault(id, 0L) > now;
 		if (afraid) {
 			boolean wasAfraid = AFRAID.contains(id);
-			damage.addOrUpdateTransientModifier(FEAR_MODIFIER);
 			AFRAID.add(id);
 			if (!wasAfraid && reason != null) {
 				player.sendSystemMessage(Component.literal(reason + " Seus golpes estão mais fracos."), true);
 			}
 		} else {
-			damage.removeModifier(FEAR_ID);
 			AFRAID.remove(id);
 			FEAR_UNTIL.remove(id);
 		}
@@ -147,11 +117,33 @@ public final class FearSystem {
 
 	/** Devolve o motivo do medo (texto para o aviso) ou null se o jogador está tranquilo. */
 	private static String findReason(ServerPlayer player) {
+		SurvivalNeedsConfig.Fear cfg = cfg();
+		float health = player.getHealth();
+
+		// 1 coração: o medo vem sempre, mesmo sem inimigos por perto
+		if (health <= cfg.lastHeartHealth) {
+			return "Você está quase morrendo!";
+		}
+
+		// Com 2 corações a região de busca de inimigos se expande bastante (só então vale o custo da busca grande)
+		boolean severe = health <= cfg.severeHealth;
+		double searchRadius = severe ? Math.max(cfg.severeRadius, cfg.bossRadius) : cfg.bossRadius;
+
 		ServerLevel level = player.level();
-		List<LivingEntity> threats = level.getEntitiesOfClass(
+		List<LivingEntity> hostiles = level.getEntitiesOfClass(
 			LivingEntity.class,
-			player.getBoundingBox().inflate(BOSS_RADIUS),
-			e -> e instanceof Enemy && e.isAlive() && e.getMaxHealth() >= MIN_THREAT_HEALTH);
+			player.getBoundingBox().inflate(searchRadius),
+			e -> e instanceof Enemy && e.isAlive());
+
+		// 2 corações: qualquer inimigo na região já causa medo
+		if (severe && !hostiles.isEmpty()) {
+			return "Você está muito ferido e há inimigos por perto!";
+		}
+
+		// Acima disso valem as regras de cerco, monstro forte, chefe etc., só com ameaças de verdade
+		List<LivingEntity> threats = hostiles.stream()
+			.filter(e -> e.getMaxHealth() >= cfg.minThreatHealth)
+			.toList();
 		if (threats.isEmpty()) {
 			return null;
 		}
@@ -161,15 +153,15 @@ public final class FearSystem {
 		boolean bossNearby = false;
 		for (LivingEntity threat : threats) {
 			double distance = threat.distanceToSqr(player);
-			boolean strong = threat.getMaxHealth() >= STRONG_MIN_HEALTH;
-			if (isBoss(threat)) {
+			boolean strong = threat.getMaxHealth() >= cfg.strongMinHealth;
+			if (isBoss(threat) && distance <= cfg.bossRadius * cfg.bossRadius) {
 				bossNearby = true;
 			}
-			if (strong && distance <= STRONG_RADIUS * STRONG_RADIUS) {
+			if (strong && distance <= cfg.strongRadius * cfg.strongRadius) {
 				strongNearby = true;
 			}
-			if (distance <= CROWD_RADIUS * CROWD_RADIUS) {
-				crowd += strong ? STRONG_WEIGHT : 1;
+			if (distance <= cfg.crowdRadius * cfg.crowdRadius) {
+				crowd += strong ? cfg.strongWeight : 1;
 			}
 		}
 
@@ -177,23 +169,23 @@ public final class FearSystem {
 		int xp = player.experienceLevel;
 		int armor = player.getArmorValue();
 
-		if (crowd >= SURROUNDED_MANY && tier < TIER_DIAMOND) {
+		if (crowd >= cfg.surroundedMany && tier < cfg.manyMinWeaponTier) {
 			return "Você está cercado por uma horda!";
 		}
-		if (crowd >= SURROUNDED_FEW && tier < TIER_IRON) {
+		if (crowd >= cfg.surroundedFew && tier < cfg.fewMinWeaponTier) {
 			return "Você está cercado e com uma arma fraca!";
 		}
-		if (strongNearby && xp < BRAVE_XP_LEVEL && armor < BRAVE_ARMOR_VALUE) {
+		if (strongNearby && xp < cfg.braveXpLevel && armor < cfg.braveArmorValue) {
 			return "Você está com medo desse monstro!";
 		}
-		if (bossNearby && !(xp >= BOSS_BRAVE_XP_LEVEL && armor >= BOSS_BRAVE_ARMOR_VALUE)) {
+		if (bossNearby && !(xp >= cfg.bossBraveXpLevel && armor >= cfg.bossBraveArmorValue)) {
 			return "Uma presença aterrorizante está por perto!";
 		}
-		if (player.getHealth() <= LOW_HEALTH && crowd >= 2) {
+		if (health <= cfg.lowHealth && crowd >= cfg.lowHealthEnemies) {
 			return "Você está ferido e em perigo!";
 		}
-		if (crowd >= 2 && tier < TIER_STONE
-			&& level.getMaxLocalRawBrightness(player.blockPosition()) <= DARK_LIGHT_LEVEL) {
+		if (crowd >= cfg.darkEnemies && tier < cfg.darkMinWeaponTier
+			&& level.getMaxLocalRawBrightness(player.blockPosition()) <= cfg.darkLightLevel) {
 			return "No escuro, cercado e desarmado!";
 		}
 		return null;

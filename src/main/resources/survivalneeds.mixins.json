@@ -1,0 +1,14 @@
+{
+	"required": true,
+	"package": "com.ronaldo.survivalneeds.mixin",
+	"compatibilityLevel": "JAVA_25",
+	"mixins": [
+		"BlockItemMixin",
+		"FoodDataMixin",
+		"PlayerMixin",
+		"ServerPlayerMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}
