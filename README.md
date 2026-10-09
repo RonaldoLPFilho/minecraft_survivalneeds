@@ -47,9 +47,18 @@ e **medo**. Cada efeito tem um ícone no canto superior direito da tela.
   P C P      P = tábuas (qualquer madeira)   C = carvão ou carvão vegetal
   P P P
   ```
-- **Como usar:** clique com o botão direito no purificador segurando uma **garrafa de água suja**, tendo
-  **pelo menos 1 carvão** (ou carvão vegetal) no inventário. A garrafa vira água purificada e 1 carvão é
-  gasto. Toca som e solta partículas de respingo. Em criativo não gasta carvão.
+- **Como usar:** clique com o botão direito no purificador para abrir a tela, que tem a mesma disposição
+  da fornalha:
+  - **Slot de cima (esquerda):** a garrafa de água suja.
+  - **Slot de baixo (esquerda):** o carvão (ou carvão vegetal). A chama mostra quanto resta.
+  - **Slot da direita:** a garrafa de água purificada, que você retira.
+  - Cada garrafa leva **4 segundos** (a seta mostra o progresso) e gasta **1 uso**.
+- **Carvão e usos:** **1 carvão = 5 usos.** O carvão é consumido assim que entra e o purificador guarda os
+  usos. A tela mostra "Usos: N/5" e a chama diminui conforme os usos acabam.
+  - **Só cabe um carvão por vez:** enquanto ainda restam usos, o slot do carvão não aceita outro. Só depois
+    que os usos chegam a 0 dá para colocar mais carvão.
+  - **Sem usos, o purificador não funciona.** As garrafas ficam paradas até você colocar carvão.
+- Shift+clique move os itens entre o inventário e o purificador. Ao quebrar o bloco, o que estiver dentro cai.
 - **Garrafa de Água Purificada:** recupera **6 pontos de sede**, empilha até 16 e devolve a garrafa de
   vidro vazia depois de beber.
 - O purificador é quebrado com machado e dropa o próprio bloco. Os dois itens aparecem no inventário criativo,
@@ -164,12 +173,16 @@ Pacote `com.ronaldo.survivalneeds`:
 | `SprintLock.java` | Bloqueia a corrida enquanto há frio ou sede baixa. |
 | `StatusFlags.java` | Resume quais efeitos estão ativos e sincroniza com o cliente para os ícones. |
 | `StatusCommands.java` | Comandos `/cold`, `/fear` e `/thirst`. |
-| `WaterPurifierBlock.java` | Bloco do purificador e a lógica de purificar a garrafa. |
+| `WaterPurifierBlock.java` | Bloco do purificador: abre a tela e liga o tick do servidor. Também reconhece a água suja. |
+| `WaterPurifierBlockEntity.java` | Inventário (3 slots), usos de carvão, progresso e a lógica de purificar. Salva e carrega. |
+| `PurifierMenu.java` | Menu do purificador (slots, shift+clique, sincronização de usos e progresso). |
+| `ModBlockEntities.java`, `ModMenus.java` | Registro do bloco com inventário e do menu. |
 | `PurifiedWaterItem.java` | Garrafa de água purificada. |
 | `ModBlocks.java`, `ModItems.java` | Registro de blocos e itens. |
 | `client/SurvivalNeedsClient.java` | Entrada do cliente: registra os elementos do HUD. |
 | `client/ThirstHud.java` | Barra de sede e seta de gasto. |
 | `client/StatusIconsHud.java` | Ícones de frio, medo e sede no canto superior direito. |
+| `client/PurifierScreen.java` | Tela do purificador, usando a textura da fornalha do jogo. |
 
 Recursos: modelos, blockstate, receita, loot table e traduções (`en_us`, `pt_br`) em
 `src/main/resources/assets/survivalneeds` e `src/main/resources/data/survivalneeds`.
@@ -206,7 +219,8 @@ Fabric API e reinicie o jogo.
 - O bloqueio de corrida é feito só pelo servidor. O cliente decide sozinho se está correndo, então pode haver
   um pequeno "puxão" ou alguns instantes de corrida antes do bloqueio. A correção definitiva é um mixin
   do lado do cliente, ainda não implementado.
-- O purificador age na hora, sem tempo de espera, e gasta 1 carvão por garrafa.
+- A tela do purificador reaproveita a textura da fornalha, então os slots de entrada e saída têm o mesmo
+  desenho dela. Não há automação com funis testada.
 - A água suja só causa dano se for bebida diretamente; não há outras fontes de intoxicação.
 - Os estados (exposição ao frio da noite, aceleração de sede) ficam em memória e reiniciam quando o
   servidor fecha. O valor da barra de sede é salvo.

@@ -1,4 +1,6 @@
 {
   "item.survivalneeds.purified_water_bottle": "Garrafa de Água Purificada",
-  "block.survivalneeds.water_purifier": "Purificador de Água"
+  "block.survivalneeds.water_purifier": "Purificador de Água",
+  "container.survivalneeds.water_purifier": "Purificador de Água",
+  "container.survivalneeds.water_purifier.uses": "Usos: %s/%s"
 }

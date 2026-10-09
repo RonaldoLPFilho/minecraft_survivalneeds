@@ -24,6 +24,8 @@ public class SurvivalNeeds implements ModInitializer {
 	public void onInitialize() {
 		ModBlocks.init();
 		ModItems.init();
+		ModBlockEntities.init();
+		ModMenus.init();
 		ThirstSystem.init();
 		StatusFlags.init();
 		CommandRegistrationCallback.EVENT.register((dispatcher, buildContext, selection) -> StatusCommands.register(dispatcher));
