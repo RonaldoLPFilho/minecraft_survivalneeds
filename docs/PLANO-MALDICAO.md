@@ -1,6 +1,6 @@
 # Plano: Maldição
 
-**Status:** plano em revisão, nada implementado.
+**Status:** Fases 1 (núcleo), 2 (Espectro e dardo) e 3 (Brubin e cura) implementadas, aguardando teste. Fases 4 (invocação com amuleto) e 5 (balanceamento e docs) pendentes.
 
 Três partes: a maldição (debuff aleatório), o Espectro da Maldição (inimigo que a causa) e a Princess Brubin (NPC que cura).
 Tudo configurável em `config/survivalneeds.json`, seção nova `curse`, recarregável com `/survivalneeds reload`.
@@ -46,13 +46,14 @@ Tudo configurável em `config/survivalneeds.json`, seção nova `curse`, recarre
 
 ## 2. Espectro da Maldição
 
-- **Muito agressivo, mas justo.** Um dardo a cada ~5 s. O ciclo é:
-  1. **Recua** sempre antes de atirar (abre distância, ~2 s).
-  2. **Atira** o dardo.
-  3. **No meio-termo, pula ofensivo** contra o jogador e ataca com as garras.
-  4. **Recua ao tomar dano forte** (limite configurável, ex.: 20% da vida num golpe) e reinicia o ciclo.
-  Com menos de 50% de vida pode disparar rajada de 2 dardos, mantendo os 5 s entre disparos.
-  Valores na config: `dartCooldownTicks` (100), `retreatBeforeShotTicks`, `leapCooldownTicks`, `retreatDamageFraction`.
+- **Não bate: atira e se teletransporta.** O ciclo é:
+  1. **Despedida:** joga um dardo e some (invisível por ~0,4 s, sem poder ser ferido).
+  2. **Teletransporte:** reaparece a 6 a 10 blocos do jogador, de frente para ele, em chão livre e com o jogador à vista.
+  3. **Tiro:** mira ~0,6 s e atira outro dardo.
+  4. **Abertura:** depois de se teletransportar, fica 5 s sem poder fazê-lo de novo; é a janela para o jogador alcançá-lo e bater. Passados os 5 s, volta ao passo 1.
+  Abaixo de 50% de vida, cada tiro vira rajada de 2 dardos.
+  Valores na config: `specterTeleportCooldownTicks` (100), `specterAimTicks`, `specterVanishTicks`, `specterTeleportMinDistance`/`MaxDistance`.
+- O combate antigo (perseguir e bater, pular para trás, atirar, pular para frente) está guardado em `entity/ai/LeapStrikeGoal`, reutilizável por um futuro monstro.
 - Vida ~100, tamanho grande (próximo de um Ravager), resistência a flechas (corpo semi-etéreo). Valores na config.
 - **Dardo:** entidade projétil própria, velocidade alta, rastro roxo/verde. Ao acertar jogador: dano pequeno, e aí vale a regra do amuleto (quebra) ou da maldição. Escudo bloqueia.
 - **Aparição:** raro, à noite e em escuridão (cavernas, pântanos). Cap de população baixo.

@@ -1,6 +1,7 @@
 package com.ronaldo.survivalneeds.mixin;
 
 import com.ronaldo.survivalneeds.Amulets;
+import com.ronaldo.survivalneeds.Curses;
 import com.ronaldo.survivalneeds.FatigueSystem;
 import net.minecraft.server.level.ServerPlayer;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
@@ -20,7 +21,10 @@ public abstract class PlayerMixin {
 	/** Amuletos equipados aumentam todo XP ganho (orbes, mineração, fundição, debuffs). */
 	@ModifyVariable(method = "giveExperiencePoints", at = @At("HEAD"), argsOnly = true)
 	private int survivalneeds$amuletBonus(int points) {
-		return (Object) this instanceof ServerPlayer player ? Amulets.boost(player, points) : points;
+		if (!((Object) this instanceof ServerPlayer player)) {
+			return points;
+		}
+		return points > 0 && Curses.blocksXp(player) ? 0 : Amulets.boost(player, points);
 	}
 
 	@Redirect(

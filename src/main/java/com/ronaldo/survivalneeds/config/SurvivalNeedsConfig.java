@@ -6,7 +6,9 @@ import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.google.gson.Gson;
@@ -37,6 +39,90 @@ public final class SurvivalNeedsConfig {
 	public Fatigue fatigue = new Fatigue();
 	public Purifier purifier = new Purifier();
 	public Progression progression = new Progression();
+	public Curse curse = new Curse();
+
+	/** Maldição: debuff aleatório. Pesos maiores sorteiam mais; peso 0 desliga aquela maldição. */
+	public static final class Curse {
+		public boolean enabled = true;
+		public double immunityMinutes = 10.0;           // depois de curado ou de morrer, ninguém é amaldiçoado por tanto tempo
+		public List<Integer> warnMinutes = new ArrayList<>(List.of(10, 5, 1)); // avisos do contador (minutos que faltam)
+		public double fragileHealthLoss = 0.3;          // Fragilidade: vida máxima perdida
+		public double halfLifeHealthLoss = 0.7;         // Vida em ruínas: vida máxima perdida
+		public double heavyBodySlowdown = 0.35;         // Corpo de chumbo: velocidade perdida
+		public double paperSkinExtraDamage = 0.5;       // Pele de papel: dano recebido a mais (0.5 = +50%)
+		public double blindHandsSlowdown = 0.7;         // Mãos cegas: velocidade de mineração perdida
+		public double parchedThirstMultiplier = 2.0;    // Ressecado: a sede gasta tantas vezes mais rápido
+		public double parchedHungerPerSecond = 0.08;    // Ressecado: cansaço de comida extra por segundo (4.0 = 1 ponto)
+		public int buildLimit = 3;                      // Mãos trêmulas: blocos seguidos que pode colocar...
+		public double buildResetSeconds = 8.0;          // ...e a espera depois disso
+		public double drowningMinutes = 20.0;           // Afogamento: tempo até começar a se afogar
+		public double drowningDamage = 2.0;             // dano de afogamento...
+		public double drowningIntervalSeconds = 1.0;    // ...a cada tantos segundos
+		public double doomMinutes = 30.0;               // Sentença: tempo até morrer
+		public double explosionMinutes = 30.0;          // Explosão: tempo até explodir
+		public float explosionPower = 10.0f;            // 10 dá dano num raio de uns 20 blocos
+		public boolean explosionBreaksBlocks = false;   // false: só dano e susto, sem destruir blocos
+		public Map<String, Integer> weights = defaultWeights();
+
+		// Princess Brubin: preço da cura em pontos, por gravidade, e quanto vale cada coisa que se oferece a ela
+		public Map<String, Integer> brubinPrice = defaultPrices();             // light, medium, grave
+		public Map<String, Integer> brubinPriceOverrides = new LinkedHashMap<>(); // preço por id de maldição, ex.: "doom": 800
+		public int brubinXpLevelValue = 20;             // pontos por nível de XP
+		public int brubinFragmentValue = 80;            // pontos por Fragmento Amaldiçoado
+		public double brubinAmuletFactor = 0.6;         // amuleto vale este fator x (8 minérios + coração)
+		public Map<String, Integer> brubinOreValue = defaultOreValues();       // pontos por item de minério
+		public Map<String, Integer> brubinHeartValue = defaultHeartValues();   // pontos por coração, por raridade
+		public double brubinWildChancePerChunk = 0.002; // chance de uma Brubin solitária por chunk novo (fora de vilas)
+
+		static Map<String, Integer> defaultPrices() {
+			Map<String, Integer> map = new LinkedHashMap<>();
+			map.put("light", 100);
+			map.put("medium", 250);
+			map.put("grave", 500);
+			return map;
+		}
+
+		static Map<String, Integer> defaultOreValues() {
+			Map<String, Integer> map = new LinkedHashMap<>();
+			map.put("minecraft:coal", 2);
+			map.put("minecraft:copper_ingot", 5);
+			map.put("minecraft:redstone", 4);
+			map.put("minecraft:lapis_lazuli", 4);
+			map.put("minecraft:iron_ingot", 8);
+			map.put("minecraft:gold_ingot", 20);
+			map.put("minecraft:emerald", 70);
+			map.put("minecraft:diamond", 100);
+			map.put("minecraft:netherite_ingot", 400);
+			return map;
+		}
+
+		static Map<String, Integer> defaultHeartValues() {
+			Map<String, Integer> map = new LinkedHashMap<>();
+			map.put("common", 12);
+			map.put("uncommon", 25);
+			map.put("rare", 60);
+			map.put("epic", 150);
+			map.put("legendary", 400);
+			return map;
+		}
+
+		// Espectro da Maldição (vida e dano ficam no código; o ritmo do combate é aqui)
+		public int specterTeleportCooldownTicks = 100;  // depois de se teletransportar, fica tantos ticks sem poder de novo (100 = 5 s): a abertura para bater
+		public int specterAimTicks = 12;                // ao reaparecer, mira por tantos ticks antes de atirar
+		public int specterVanishTicks = 8;              // tempo invisível entre sumir e reaparecer
+		public double specterTeleportMinDistance = 6.0; // reaparece a esta distância do alvo, no mínimo...
+		public double specterTeleportMaxDistance = 10.0; // ...e no máximo
+		public double specterVolleyBelowHealth = 0.5;   // abaixo desta fração de vida, atira 2 dardos
+		public double specterDartSpeed = 1.6;           // velocidade do dardo
+
+		static Map<String, Integer> defaultWeights() {
+			Map<String, Integer> map = new LinkedHashMap<>();
+			for (com.ronaldo.survivalneeds.Curse curse : com.ronaldo.survivalneeds.Curse.values()) {
+				map.put(curse.id, curse.defaultWeight);
+			}
+			return map;
+		}
+	}
 
 	/** Sede. A barra tem sempre 20 pontos (10 gotas). */
 	public static final class Thirst {
@@ -209,6 +295,7 @@ public final class SurvivalNeedsConfig {
 				map.put("minecraft:" + id, "epic");
 			}
 			map.put("minecraft:ender_dragon", "legendary");
+			map.put("survivalneeds:curse_specter", "epic");
 			return map;
 		}
 	}
@@ -335,12 +422,20 @@ public final class SurvivalNeedsConfig {
 		if (fatigue == null) fatigue = new Fatigue();
 		if (purifier == null) purifier = new Purifier();
 		if (progression == null) progression = new Progression();
+		if (curse == null) curse = new Curse();
+		if (curse.weights == null) curse.weights = Curse.defaultWeights();
+		if (curse.brubinPrice == null) curse.brubinPrice = Curse.defaultPrices();
+		if (curse.brubinPriceOverrides == null) curse.brubinPriceOverrides = new LinkedHashMap<>();
+		if (curse.brubinOreValue == null) curse.brubinOreValue = Curse.defaultOreValues();
+		if (curse.brubinHeartValue == null) curse.brubinHeartValue = Curse.defaultHeartValues();
+		if (curse.warnMinutes == null) curse.warnMinutes = new ArrayList<>(List.of(10, 5, 1));
 		if (progression.death == null) progression.death = new Death();
 		if (progression.amulets == null) progression.amulets = new Amulets();
 		if (progression.amulets.oreBonus == null) progression.amulets.oreBonus = Amulets.defaultOres();
 		if (progression.hearts == null) progression.hearts = new Hearts();
 		if (progression.hearts.tiers == null) progression.hearts.tiers = Hearts.defaultTiers();
 		if (progression.hearts.monsters == null) progression.hearts.monsters = Hearts.defaultMonsters();
+		progression.hearts.monsters.putIfAbsent("survivalneeds:curse_specter", "epic"); // configs antigas não têm o Espectro
 		if (progression.debuffXp == null) progression.debuffXp = new DebuffXp();
 		if (progression.debuffXp.types == null) progression.debuffXp.types = DebuffXp.defaultTypes();
 		if (progression.equipment == null) progression.equipment = new Equipment();

@@ -31,4 +31,7 @@ public sealed interface DebuffEffect {
 
 	/** A armadura (e a resistência) do jogador cai {@code fraction} (0.5 = metade da proteção). */
 	record ArmorReduction(double fraction) implements DebuffEffect {}
+
+	/** A vida máxima do jogador cai {@code fraction} (0.3 = 30% a menos). */
+	record MaxHealthReduction(double fraction) implements DebuffEffect {}
 }

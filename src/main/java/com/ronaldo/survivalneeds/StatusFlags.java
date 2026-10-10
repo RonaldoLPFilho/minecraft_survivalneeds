@@ -18,6 +18,7 @@ public final class StatusFlags {
 	public static final int HEAT = 16; // molhado e perto de uma fonte de calor
 	public static final int HUNGRY = 32; // faminto: carne zerada, contagem para morrer
 	public static final int FATIGUED = 64; // cansado: noites sem dormir
+	public static final int CURSED = 128; // amaldiçoado
 
 	public static final AttachmentType<Integer> FLAGS = AttachmentRegistry.<Integer>create(
 		SurvivalNeeds.id("status_flags"),
@@ -46,7 +47,8 @@ public final class StatusFlags {
 			| (WetSystem.isWet(player) ? WET : 0)
 			| (WetSystem.isWet(player) && WetSystem.isNearHeat(player) ? HEAT : 0)
 			| (HungerSystem.isStarving(player) ? HUNGRY : 0)
-			| (FatigueSystem.isFatigued(player) ? FATIGUED : 0);
+			| (FatigueSystem.isFatigued(player) ? FATIGUED : 0)
+			| (Curses.isCursed(player) ? CURSED : 0);
 		if (player.getAttachedOrElse(FLAGS, 0) != flags) {
 			player.setAttached(FLAGS, flags);
 		}

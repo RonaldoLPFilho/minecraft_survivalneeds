@@ -116,6 +116,7 @@ public final class ThirstSystem {
 		} else {
 			SPRINT_TICKS.remove(player.getUUID());
 		}
+		rate *= (float) Curses.thirstMultiplier(player);
 		float drain = DRAIN.merge(player.getUUID(), rate, Float::sum);
 		if (drain >= 1f) {
 			DRAIN.put(player.getUUID(), drain - 1f);

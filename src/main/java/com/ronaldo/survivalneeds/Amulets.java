@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import com.ronaldo.survivalneeds.config.SurvivalNeedsConfig;
+import eu.pb4.trinkets.api.TrinketSlotAccess;
 import eu.pb4.trinkets.api.TrinketsApi;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
@@ -76,6 +77,23 @@ public final class Amulets {
 			}
 		});
 		return Math.min(cfg().maxTotalBonus, sum[0]);
+	}
+
+	/** Parte o amuleto equipado de menor bônus (protege do primeiro dardo). Falso se não há nenhum equipado. */
+	public static boolean breakWeakest(ServerPlayer player) {
+		TrinketSlotAccess[] weakest = {null};
+		double[] lowest = {Double.MAX_VALUE};
+		TrinketsApi.getAttachment(player).forEach((access, stack) -> {
+			if (stack.is(ModItems.AMULET) && bonusOf(stack) < lowest[0]) {
+				lowest[0] = bonusOf(stack);
+				weakest[0] = access;
+			}
+		});
+		if (weakest[0] == null) {
+			return false;
+		}
+		weakest[0].set(ItemStack.EMPTY);
+		return true;
 	}
 
 	// ---- aplicação no XP ----

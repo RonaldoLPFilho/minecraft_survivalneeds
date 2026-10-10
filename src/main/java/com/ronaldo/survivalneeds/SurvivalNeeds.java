@@ -34,6 +34,7 @@ public class SurvivalNeeds implements ModInitializer {
 		ModBlocks.init();
 		ModComponents.init();
 		ModItems.init();
+		ModEntities.init();
 		ModBlockEntities.init();
 		ModMenus.init();
 		ThirstSystem.init();
@@ -42,6 +43,8 @@ public class SurvivalNeeds implements ModInitializer {
 		StatusFlags.init();
 		DeathPenalty.init();
 		Hearts.init();
+		Curses.init();
+		BrubinSpawner.init();
 		CommandRegistrationCallback.EVENT.register((dispatcher, buildContext, selection) -> StatusCommands.register(dispatcher));
 
 		ServerTickEvents.END_SERVER_TICK.register(server ->
@@ -54,6 +57,7 @@ public class SurvivalNeeds implements ModInitializer {
 				FatigueSystem.tick(player);
 				ThirstSystem.tick(player);
 				GearSystem.tick(player);
+				Curses.tick(player);
 				DebuffSystem.tick(player); // depois de todos os sistemas: aplica os efeitos que eles pediram
 				StatusFlags.update(player);
 			}));
@@ -63,13 +67,21 @@ public class SurvivalNeeds implements ModInitializer {
 			DebuffSystem.forget(handler.getPlayer().getUUID());
 			EquipmentGate.forget(handler.getPlayer().getUUID());
 			Amulets.forget(handler.getPlayer().getUUID());
+			Curses.forget(handler.getPlayer().getUUID());
 		});
 
-		// Molhado não consegue dormir
-		EntitySleepEvents.ALLOW_SLEEPING.register((player, pos) ->
-			player instanceof ServerPlayer serverPlayer && WetSystem.isWet(serverPlayer)
+		// Molhado ou amaldiçoado com insônia não consegue dormir
+		EntitySleepEvents.ALLOW_SLEEPING.register((player, pos) -> {
+			if (!(player instanceof ServerPlayer serverPlayer)) {
+				return null;
+			}
+			if (Curses.has(serverPlayer, Curse.NO_SLEEP) && !serverPlayer.isCreative()) {
+				return new Player.BedSleepingProblem(Component.literal("A maldição não deixa você dormir."));
+			}
+			return WetSystem.isWet(serverPlayer)
 				? new Player.BedSleepingProblem(Component.literal("Você está molhado demais para dormir! Seque-se primeiro."))
-				: null);
+				: null;
+		});
 
 		// Cansado dorme mesmo com monstros por perto
 		EntitySleepEvents.ALLOW_NEARBY_MONSTERS.register((player, pos, vanillaResult) ->
@@ -82,6 +94,9 @@ public class SurvivalNeeds implements ModInitializer {
 		addToCreativeTab("food_and_drinks", ModItems.PURIFIED_WATER_BOTTLE);
 		addToCreativeTab("functional_blocks", ModItems.WATER_PURIFIER);
 		addToCreativeTab("functional_blocks", ModItems.AMULET_TABLE);
+		addToCreativeTab("spawn_eggs", ModItems.CURSE_SPECTER_SPAWN_EGG);
+		addToCreativeTab("spawn_eggs", ModItems.PRINCESS_BRUBIN_SPAWN_EGG);
+		addToCreativeTab("ingredients", ModItems.CURSE_FRAGMENT);
 
 		// Um coração de cada monstro na aba de ingredientes
 		CreativeModeTabEvents.modifyOutputEvent(ResourceKey.create(Registries.CREATIVE_MODE_TAB, Identifier.withDefaultNamespace("ingredients")))

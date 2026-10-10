@@ -9,7 +9,8 @@
 		"FoodDataMixin",
 		"LivingEntityMixin",
 		"PlayerMixin",
-		"ServerPlayerMixin"
+		"ServerPlayerMixin",
+		"SpawnPlacementsInvoker"
 	],
 	"injectors": {
 		"defaultRequire": 1

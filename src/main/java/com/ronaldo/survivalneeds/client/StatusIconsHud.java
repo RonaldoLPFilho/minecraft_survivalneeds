@@ -1,5 +1,7 @@
 package com.ronaldo.survivalneeds.client;
 
+import com.ronaldo.survivalneeds.Curse;
+import com.ronaldo.survivalneeds.Curses;
 import com.ronaldo.survivalneeds.FatigueSystem;
 import com.ronaldo.survivalneeds.HungerSystem;
 import com.ronaldo.survivalneeds.StatusFlags;
@@ -15,7 +17,8 @@ import net.minecraft.world.effect.MobEffectInstance;
 
 /** Mostra no canto superior direito o ícone de cada efeito ativo (frio, medo, sede, fome, cansaço, molhado). */
 public final class StatusIconsHud {
-	private static final Identifier COLD = SurvivalNeeds.id("hud/status_cold");
+	private static final Identifier CURSE = SurvivalNeeds.id("hud/status_curse");
+	private static final Identifier COLD =SurvivalNeeds.id("hud/status_cold");
 	private static final Identifier FEAR = SurvivalNeeds.id("hud/status_fear");
 	private static final Identifier THIRST = SurvivalNeeds.id("hud/status_thirst");
 	private static final Identifier HUNGER = SurvivalNeeds.id("hud/status_hunger");
@@ -56,6 +59,8 @@ public final class StatusIconsHud {
 		int y = MARGIN + EFFECT_ROW_HEIGHT * ((beneficial ? 1 : 0) + (harmful ? 1 : 0));
 
 		int slot = 0;
+		int curseSlot = slot;
+		slot = draw(graphics, flags, StatusFlags.CURSED, CURSE, y, slot);
 		slot = draw(graphics, flags, StatusFlags.COLD, COLD, y, slot);
 		slot = draw(graphics, flags, StatusFlags.FEAR, FEAR, y, slot);
 		slot = draw(graphics, flags, StatusFlags.THIRST, THIRST, y, slot);
@@ -69,6 +74,18 @@ public final class StatusIconsHud {
 		int wetSlot = slot;
 		slot = draw(graphics, flags, StatusFlags.WET, WET, y, slot);
 		draw(graphics, flags, StatusFlags.HEAT, HEAT, y, slot); // fogueira ao lado do molhado
+
+		// Maldição: nome da maldição e, se tiver contador, o tempo que falta
+		Curse curse = Curses.current(player);
+		if ((flags & StatusFlags.CURSED) != 0 && curse != null) {
+			int curseTicks = player.getAttachedOrElse(Curses.TICKS, 0);
+			if (curseTicks > 0) {
+				drawTimer(graphics, curseSlot, y, (curseTicks + 19) / 20, 0xFFE0A0FF);
+			}
+			Font font = Minecraft.getInstance().font;
+			int nameY = y + ICON_SIZE + (curseTicks > 0 ? 13 : 2);
+			graphics.text(font, curse.displayName, graphics.guiWidth() - MARGIN - font.width(curse.displayName), nameY, 0xFFC77DFF, true);
+		}
 
 		// Contador de fome (10:00 até 0:00): tempo que resta para morrer de fome
 		int hungerSeconds = (player.getAttachedOrElse(HungerSystem.TICKS_LEFT, 0) + 19) / 20;
