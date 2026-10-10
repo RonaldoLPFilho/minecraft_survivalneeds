@@ -15,5 +15,8 @@ public class SurvivalNeedsClient implements ClientModInitializer {
 		HudElementRegistry.attachElementAfter(VanillaHudElements.MOB_EFFECTS, SurvivalNeeds.id("status_icons"), StatusIconsHud::render);
 		MenuScreens.register(ModMenus.WATER_PURIFIER, PurifierScreen::new);
 		GearTooltip.register();
+		HeartTooltip.register();
+		AmuletTooltip.register();
+		MenuScreens.register(ModMenus.AMULET_TABLE, AmuletTableScreen::new);
 	}
 }

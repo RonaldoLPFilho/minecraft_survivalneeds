@@ -1,0 +1,6 @@
+{
+  "icon": "trinkets:container/slots/charm",
+  "order": -1000,
+  "amount": 2,
+  "validator_predicates": ["trinkets:default"]
+}

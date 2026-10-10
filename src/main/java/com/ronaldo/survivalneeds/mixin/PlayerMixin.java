@@ -1,6 +1,9 @@
 package com.ronaldo.survivalneeds.mixin;
 
+import com.ronaldo.survivalneeds.Amulets;
 import com.ronaldo.survivalneeds.FatigueSystem;
+import net.minecraft.server.level.ServerPlayer;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import net.minecraft.world.attribute.BedRule;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -14,6 +17,12 @@ import org.spongepowered.asm.mixin.injection.Redirect;
  */
 @Mixin(Player.class)
 public abstract class PlayerMixin {
+	/** Amuletos equipados aumentam todo XP ganho (orbes, mineração, fundição, debuffs). */
+	@ModifyVariable(method = "giveExperiencePoints", at = @At("HEAD"), argsOnly = true)
+	private int survivalneeds$amuletBonus(int points) {
+		return (Object) this instanceof ServerPlayer player ? Amulets.boost(player, points) : points;
+	}
+
 	@Redirect(
 		method = "tick",
 		at = @At(value = "INVOKE", target = "Lnet/minecraft/world/attribute/BedRule;canSleep(Lnet/minecraft/world/level/Level;)Z"))

@@ -1,6 +1,14 @@
 {
   "item.survivalneeds.purified_water_bottle": "Purified Water Bottle",
+  "item.survivalneeds.monster_heart": "Monster Heart",
+  "item.survivalneeds.monster_heart.of": "%s Heart",
+  "item.survivalneeds.amulet": "Amulet",
+  "item.survivalneeds.amulet.of": "%s Amulet",
+  "item.survivalneeds.amulet.of_with": "%s Amulet (%s)",
   "block.survivalneeds.water_purifier": "Water Purifier",
+  "block.survivalneeds.amulet_table": "Amulet Table",
   "container.survivalneeds.water_purifier": "Water Purifier",
-  "container.survivalneeds.water_purifier.uses": "Uses: %s/%s"
+  "container.survivalneeds.water_purifier.uses": "Uses: %s/%s",
+  "container.survivalneeds.amulet_table": "Amulet Table",
+  "trinkets.slot.chest.amulet": "Amulet"
 }

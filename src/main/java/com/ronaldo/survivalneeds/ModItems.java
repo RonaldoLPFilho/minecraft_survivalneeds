@@ -22,6 +22,16 @@ public final class ModItems {
 	public static final Item WATER_PURIFIER = register("water_purifier", props ->
 		new BlockItem(ModBlocks.WATER_PURIFIER, props.useBlockDescriptionPrefix()));
 
+	public static final Item MONSTER_HEART = register("monster_heart", props ->
+		new MonsterHeartItem(props
+			.stacksTo(16)
+			.component(DataComponents.CONSUMABLE, Consumables.DEFAULT_FOOD)));
+
+	public static final Item AMULET = register("amulet", AmuletItem::new);
+
+	public static final Item AMULET_TABLE = register("amulet_table", props ->
+		new BlockItem(ModBlocks.AMULET_TABLE, props.useBlockDescriptionPrefix()));
+
 	private ModItems() {}
 
 	private static Item register(String name, Function<Item.Properties, Item> factory) {

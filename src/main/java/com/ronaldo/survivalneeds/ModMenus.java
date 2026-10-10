@@ -11,6 +11,11 @@ public final class ModMenus {
 		SurvivalNeeds.id("water_purifier"),
 		new ExtendedMenuType<>((containerId, inventory, pos) -> new PurifierMenu(containerId, inventory), BlockPos.STREAM_CODEC));
 
+	public static final ExtendedMenuType<AmuletTableMenu, BlockPos> AMULET_TABLE = Registry.register(
+		BuiltInRegistries.MENU,
+		SurvivalNeeds.id("amulet_table"),
+		new ExtendedMenuType<>((containerId, inventory, pos) -> new AmuletTableMenu(containerId, inventory), BlockPos.STREAM_CODEC));
+
 	private ModMenus() {}
 
 	public static void init() {}

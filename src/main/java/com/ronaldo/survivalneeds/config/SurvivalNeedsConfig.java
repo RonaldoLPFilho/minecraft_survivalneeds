@@ -150,6 +150,80 @@ public final class SurvivalNeedsConfig {
 		public Equipment equipment = new Equipment();
 		public Death death = new Death();
 		public DebuffXp debuffXp = new DebuffXp();
+		public Hearts hearts = new Hearts();
+		public Amulets amulets = new Amulets();
+	}
+
+	/** Amuletos: 8 minérios + 1 coração dão um bônus de XP. Os 2 espaços vêm de data/trinkets/slots/chest/amulet.json. */
+	public static final class Amulets {
+		public boolean enabled = true;
+		public double maxTotalBonus = 2.0;              // soma máxima dos amuletos equipados (2.0 = +200%)
+		public Map<String, Double> oreBonus = defaultOres(); // id do item do minério -> bônus (0.5 = +50%)
+
+		static Map<String, Double> defaultOres() {
+			Map<String, Double> map = new LinkedHashMap<>();
+			map.put("minecraft:coal", 0.04);
+			map.put("minecraft:copper_ingot", 0.08);
+			map.put("minecraft:redstone", 0.12);
+			map.put("minecraft:lapis_lazuli", 0.12);
+			map.put("minecraft:iron_ingot", 0.15);
+			map.put("minecraft:gold_ingot", 0.25);
+			map.put("minecraft:emerald", 0.35);
+			map.put("minecraft:diamond", 0.50);
+			map.put("minecraft:netherite_ingot", 0.80);
+			return map;
+		}
+	}
+
+	/** Coração de monstro: chance de cair, XP ao consumir e bônus no amuleto, por raridade. */
+	public static final class Hearts {
+		public boolean enabled = true;
+		public double lootingBonus = 0.02;              // chance extra por nível de Pilhagem (0.02 = +2%)
+		public int pityKills = 30;                      // depois de tantas mortes sem coração, a próxima dá um (0 desliga)
+		public Map<String, HeartTier> tiers = defaultTiers();
+		public Map<String, String> monsters = defaultMonsters(); // id do monstro -> raridade
+
+		static Map<String, HeartTier> defaultTiers() {
+			Map<String, HeartTier> map = new LinkedHashMap<>();
+			map.put("common", new HeartTier(0.06, 10, 0.03));
+			map.put("uncommon", new HeartTier(0.08, 20, 0.06));
+			map.put("rare", new HeartTier(0.12, 50, 0.15));
+			map.put("epic", new HeartTier(1.0, 200, 0.60));
+			map.put("legendary", new HeartTier(1.0, 500, 1.00));
+			return map;
+		}
+
+		static Map<String, String> defaultMonsters() {
+			Map<String, String> map = new LinkedHashMap<>();
+			for (String id : new String[] {"zombie", "skeleton", "spider", "creeper", "slime"}) {
+				map.put("minecraft:" + id, "common");
+			}
+			for (String id : new String[] {"cave_spider", "drowned", "husk", "stray", "witch", "pillager", "phantom"}) {
+				map.put("minecraft:" + id, "uncommon");
+			}
+			for (String id : new String[] {"enderman", "blaze", "ghast", "guardian", "wither_skeleton", "piglin_brute",
+					"vindicator", "evoker", "hoglin", "shulker", "ravager"}) {
+				map.put("minecraft:" + id, "rare");
+			}
+			for (String id : new String[] {"warden", "wither", "elder_guardian"}) {
+				map.put("minecraft:" + id, "epic");
+			}
+			map.put("minecraft:ender_dragon", "legendary");
+			return map;
+		}
+	}
+
+	/** Uma raridade de coração. */
+	public static final class HeartTier {
+		public double chance;                           // chance de cair ao matar (1.0 = sempre)
+		public int xp;                                  // XP ao consumir o coração
+		public double bonus;                            // bônus de XP no amuleto (0.03 = +3%)
+
+		public HeartTier(double chance, int xp, double bonus) {
+			this.chance = chance;
+			this.xp = xp;
+			this.bonus = bonus;
+		}
 	}
 
 	/** XP extra por superar um debuff, com proteção contra farm. */
@@ -262,6 +336,11 @@ public final class SurvivalNeedsConfig {
 		if (purifier == null) purifier = new Purifier();
 		if (progression == null) progression = new Progression();
 		if (progression.death == null) progression.death = new Death();
+		if (progression.amulets == null) progression.amulets = new Amulets();
+		if (progression.amulets.oreBonus == null) progression.amulets.oreBonus = Amulets.defaultOres();
+		if (progression.hearts == null) progression.hearts = new Hearts();
+		if (progression.hearts.tiers == null) progression.hearts.tiers = Hearts.defaultTiers();
+		if (progression.hearts.monsters == null) progression.hearts.monsters = Hearts.defaultMonsters();
 		if (progression.debuffXp == null) progression.debuffXp = new DebuffXp();
 		if (progression.debuffXp.types == null) progression.debuffXp.types = DebuffXp.defaultTypes();
 		if (progression.equipment == null) progression.equipment = new Equipment();

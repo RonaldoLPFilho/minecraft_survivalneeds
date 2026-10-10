@@ -32,6 +32,7 @@ public class SurvivalNeeds implements ModInitializer {
 	public void onInitialize() {
 		SurvivalNeedsConfig.load();
 		ModBlocks.init();
+		ModComponents.init();
 		ModItems.init();
 		ModBlockEntities.init();
 		ModMenus.init();
@@ -40,6 +41,7 @@ public class SurvivalNeeds implements ModInitializer {
 		FatigueSystem.init();
 		StatusFlags.init();
 		DeathPenalty.init();
+		Hearts.init();
 		CommandRegistrationCallback.EVENT.register((dispatcher, buildContext, selection) -> StatusCommands.register(dispatcher));
 
 		ServerTickEvents.END_SERVER_TICK.register(server ->
@@ -60,6 +62,7 @@ public class SurvivalNeeds implements ModInitializer {
 		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
 			DebuffSystem.forget(handler.getPlayer().getUUID());
 			EquipmentGate.forget(handler.getPlayer().getUUID());
+			Amulets.forget(handler.getPlayer().getUUID());
 		});
 
 		// Molhado não consegue dormir
@@ -78,6 +81,12 @@ public class SurvivalNeeds implements ModInitializer {
 
 		addToCreativeTab("food_and_drinks", ModItems.PURIFIED_WATER_BOTTLE);
 		addToCreativeTab("functional_blocks", ModItems.WATER_PURIFIER);
+		addToCreativeTab("functional_blocks", ModItems.AMULET_TABLE);
+
+		// Um coração de cada monstro na aba de ingredientes
+		CreativeModeTabEvents.modifyOutputEvent(ResourceKey.create(Registries.CREATIVE_MODE_TAB, Identifier.withDefaultNamespace("ingredients")))
+			.register(output -> SurvivalNeedsConfig.get().progression.hearts.monsters.keySet()
+				.forEach(monster -> output.accept(Hearts.create(monster))));
 
 		LOGGER.info("Survival Needs carregado!");
 	}
