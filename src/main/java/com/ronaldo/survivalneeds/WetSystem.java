@@ -164,6 +164,7 @@ public final class WetSystem {
 		float progress = DRY_PROGRESS.getOrDefault(id, 0f) + rate;
 		DRY_PROGRESS.put(id, progress);
 		if (progress >= 1f) {
+			DebuffXp.recover(player, DebuffXp.Type.WET);
 			dry(player, true);
 		}
 	}
@@ -180,12 +181,16 @@ public final class WetSystem {
 
 	private static void becomeWet(ServerPlayer player) {
 		if (WET.add(player.getUUID())) {
+			if (!FORCED.contains(player.getUUID())) {
+				DebuffXp.begin(player, DebuffXp.Type.WET);
+			}
 			player.sendSystemMessage(Component.literal("Você está molhado! Procure um lugar coberto para secar."), true);
 		}
 	}
 
 	private static void dry(ServerPlayer player, boolean notify) {
 		UUID id = player.getUUID();
+		DebuffXp.abort(player, DebuffXp.Type.WET); // secar com recuperação já chamou recover antes
 		boolean wasWet = WET.remove(id);
 		HEAT.remove(id);
 		DRYING.remove(id);

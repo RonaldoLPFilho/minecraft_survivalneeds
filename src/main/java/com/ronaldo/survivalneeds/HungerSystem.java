@@ -1,8 +1,10 @@
 package com.ronaldo.survivalneeds;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import com.mojang.serialization.Codec;
@@ -42,6 +44,7 @@ public final class HungerSystem {
 
 	private static final Map<UUID, Integer> LEFT = new HashMap<>();         // contagem exata, em memória
 	private static final Map<UUID, Integer> HEAL_COUNTER = new HashMap<>();
+	private static final Set<UUID> FORCED = new HashSet<>(); // fome ligada por comando que ainda não começou
 
 	private HungerSystem() {}
 
@@ -60,7 +63,9 @@ public final class HungerSystem {
 	/** Liga (carne zerada, começa a contagem) ou desliga (barra cheia) a fome: comando /hunger. */
 	public static void setActive(ServerPlayer player, boolean active) {
 		FoodData food = player.getFoodData();
+		FORCED.remove(player.getUUID());
 		if (active) {
+			FORCED.add(player.getUUID()); // a fome por comando não dá XP ao passar
 			food.setFoodLevel(0);
 		} else {
 			food.setFoodLevel(20);
@@ -85,6 +90,9 @@ public final class HungerSystem {
 			left = SurvivalNeedsConfig.ticks(cfg.starveSeconds);
 			LEFT.put(id, left);
 			player.setAttached(TICKS_LEFT, left);
+			if (!FORCED.remove(id)) {
+				DebuffXp.begin(player, DebuffXp.Type.HUNGER);
+			}
 			player.sendSystemMessage(Component.literal("Você está faminto! Coma até a metade da barra ou morrerá em "
 				+ Math.round(cfg.starveSeconds / 60.0) + " minutos."), true);
 		} else if (left > 0 && food.getFoodLevel() >= cfg.recoverFoodLevel) {
@@ -143,6 +151,11 @@ public final class HungerSystem {
 		HEAL_COUNTER.remove(id);
 		player.setAttached(TICKS_LEFT, 0);
 		DebuffSystem.clear(player, SOURCE);
+		if (notify) {
+			DebuffXp.recover(player, DebuffXp.Type.HUNGER);
+		} else {
+			DebuffXp.abort(player, DebuffXp.Type.HUNGER);
+		}
 		if (notify) {
 			player.sendSystemMessage(Component.literal("Você se alimentou e a fome passou."), true);
 		}

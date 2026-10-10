@@ -39,10 +39,12 @@ public class SurvivalNeeds implements ModInitializer {
 		HungerSystem.init();
 		FatigueSystem.init();
 		StatusFlags.init();
+		DeathPenalty.init();
 		CommandRegistrationCallback.EVENT.register((dispatcher, buildContext, selection) -> StatusCommands.register(dispatcher));
 
 		ServerTickEvents.END_SERVER_TICK.register(server ->
 			server.getPlayerList().getPlayers().forEach(player -> {
+				DebuffXp.tick(player);
 				ColdSystem.tick(player);
 				FearSystem.tick(player);
 				WetSystem.tick(player);

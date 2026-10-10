@@ -84,8 +84,10 @@ public final class FatigueSystem {
 		if (active) {
 			player.setAttached(NIGHTS_AWAKE, cfg().nightsWithoutSleep);
 			startFatigue(player);
+			DebuffXp.abort(player, DebuffXp.Type.FATIGUE); // comando não dá XP
 		} else {
 			player.setAttached(NIGHTS_AWAKE, 0);
+			DebuffXp.abort(player, DebuffXp.Type.FATIGUE);
 			rest(player, true);
 		}
 	}
@@ -161,6 +163,7 @@ public final class FatigueSystem {
 			player.setAttached(NIGHTS_AWAKE, 0);
 		}
 		if (ACTIVE.contains(id)) {
+			DebuffXp.recover(player, DebuffXp.Type.FATIGUE);
 			rest(player, true);
 		}
 	}
@@ -174,6 +177,7 @@ public final class FatigueSystem {
 		}
 		int ticks = SurvivalNeedsConfig.ticks(cfg().counterSeconds);
 		LEFT.put(id, ticks);
+		DebuffXp.begin(player, DebuffXp.Type.FATIGUE);
 		player.setAttached(STATE, ticks + 1);
 		player.sendSystemMessage(Component.literal("Você está exausto! Durma em até "
 			+ Math.round(cfg().counterSeconds / 60.0) + " minutos ou começará a perder vida."), true);
@@ -207,6 +211,7 @@ public final class FatigueSystem {
 	/** Cansaço passou (dormiu, comando ou mudou de modo de jogo). */
 	private static void rest(ServerPlayer player, boolean notify) {
 		UUID id = player.getUUID();
+		DebuffXp.abort(player, DebuffXp.Type.FATIGUE); // dormir já chamou recover antes
 		boolean wasActive = ACTIVE.remove(id);
 		LEFT.put(id, 0);
 		player.setAttached(STATE, 0);

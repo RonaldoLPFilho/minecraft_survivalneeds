@@ -45,6 +45,7 @@ public final class ColdSystem {
 
 	/** Liga ou desliga o frio à força (comando /cold), ignorando bioma, noite e armadura. */
 	public static void setForced(ServerPlayer player, boolean forced) {
+		DebuffXp.abort(player, DebuffXp.Type.COLD); // comando não dá XP, nem ao ligar nem ao desligar
 		if (forced) {
 			FORCED.add(player.getUUID());
 		} else {
@@ -83,6 +84,9 @@ public final class ColdSystem {
 			}
 
 			if (!wasCold) {
+				if (!forced) {
+					DebuffXp.begin(player, DebuffXp.Type.COLD);
+				}
 				String message = biomeCold || forced
 					? "Você está com frio! Vista uma armadura."
 					: "O frio da noite te alcançou! Vista uma armadura ou procure abrigo.";
@@ -90,6 +94,13 @@ public final class ColdSystem {
 			}
 		} else {
 			FREEZING.remove(id);
+			if (wasCold) {
+				if (active) {
+					DebuffXp.recover(player, DebuffXp.Type.COLD);
+				} else {
+					DebuffXp.abort(player, DebuffXp.Type.COLD);
+				}
+			}
 		}
 	}
 

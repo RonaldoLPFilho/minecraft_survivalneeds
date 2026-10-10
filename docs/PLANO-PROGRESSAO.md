@@ -1,6 +1,6 @@
-# Plano: Progressão por XP, coração de monstro e amuletos
+﻿# Plano: Progressão por XP, coração de monstro e amuletos
 
-> **Status:** especificação **fechada**. **Fase A (equipamento) implementada**, aguardando teste no jogo. Fases B a E ainda não.
+> **Status:** especificação **fechada**. **Fases A (equipamento) e B (morte) testadas; C (XP por debuffs) implementada**, aguardando teste. Fases D e E ainda não.
 > Os números abaixo são os valores padrão e ficam todos no JSON de configuração.
 > O que já está pronto: os ícones do coração, do amuleto e da mesa (em `src/main/resources/assets/survivalneeds/textures/item/`)
 > e a verificação da dependência do Trinkets.
@@ -358,3 +358,5 @@ conferir que o teto de +200% é respeitado; matar monstros e ver o XP maior.
 | **E** | Trinkets (dependência), amuleto, espaços, bônus de XP e a Mesa de Amuletos. | D, e C/B para o XP |
 
 As fases B, C e D são independentes entre si e podem ser feitas em qualquer ordem depois da A.
+
+

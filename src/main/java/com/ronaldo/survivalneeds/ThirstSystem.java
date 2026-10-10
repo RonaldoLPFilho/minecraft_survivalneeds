@@ -58,7 +58,9 @@ public final class ThirstSystem {
 	/** Liga a sede (comando /thirst): deixa a barra no limite do efeito. Desligar enche a barra. */
 	public static void setActive(ServerPlayer player, boolean active) {
 		int target = active ? cfg().noSprintAtOrBelow : MAX;
+		DebuffXp.abort(player, DebuffXp.Type.THIRST); // comando não dá XP
 		add(player, target - get(player));
+		DebuffXp.abort(player, DebuffXp.Type.THIRST);
 	}
 
 	/** Soma (ou subtrai) pontos de sede, limitado entre 0 e MAX. Só no servidor. */
@@ -71,7 +73,10 @@ public final class ThirstSystem {
 		player.setAttached(THIRST, now);
 		int limit = cfg().noSprintAtOrBelow;
 		if (old > limit && now <= limit) {
+			DebuffXp.begin(player, DebuffXp.Type.THIRST);
 			player.sendSystemMessage(Component.literal("Você está com sede demais para correr!"), true);
+		} else if (old <= limit && now > limit) {
+			DebuffXp.recover(player, DebuffXp.Type.THIRST);
 		}
 	}
 

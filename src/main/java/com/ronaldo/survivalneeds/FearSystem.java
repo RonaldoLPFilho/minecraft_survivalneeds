@@ -71,6 +71,7 @@ public final class FearSystem {
 
 	/** Liga ou desliga o medo à força (comando /fear), ignorando todas as regras. */
 	public static void setForced(ServerPlayer player, boolean forced) {
+		DebuffXp.abort(player, DebuffXp.Type.FEAR); // comando não dá XP
 		if (forced) {
 			FORCED.add(player.getUUID());
 		} else {
@@ -106,11 +107,20 @@ public final class FearSystem {
 		if (afraid) {
 			boolean wasAfraid = AFRAID.contains(id);
 			AFRAID.add(id);
+			if (!wasAfraid && !FORCED.contains(id)) {
+				DebuffXp.begin(player, DebuffXp.Type.FEAR);
+			}
 			if (!wasAfraid && reason != null) {
 				player.sendSystemMessage(Component.literal(reason + " Seus golpes estão mais fracos."), true);
 			}
 		} else {
-			AFRAID.remove(id);
+			if (AFRAID.remove(id)) {
+				if (player.isDeadOrDying() || player.isCreative() || player.isSpectator()) {
+					DebuffXp.abort(player, DebuffXp.Type.FEAR);
+				} else {
+					DebuffXp.recover(player, DebuffXp.Type.FEAR);
+				}
+			}
 			FEAR_UNTIL.remove(id);
 		}
 	}

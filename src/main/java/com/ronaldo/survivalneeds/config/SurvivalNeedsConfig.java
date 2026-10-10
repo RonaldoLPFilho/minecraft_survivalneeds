@@ -148,6 +148,48 @@ public final class SurvivalNeedsConfig {
 	public static final class Progression {
 		public boolean enabled = true;                  // false desliga toda a progressão
 		public Equipment equipment = new Equipment();
+		public Death death = new Death();
+		public DebuffXp debuffXp = new DebuffXp();
+	}
+
+	/** XP extra por superar um debuff, com proteção contra farm. */
+	public static final class DebuffXp {
+		public boolean enabled = true;
+		public double tolerancePerType = 4.0;           // cada ganho do mesmo tipo reduz o próximo: xp x (1 - recente / tolerância)
+		public double decayMinutes = 8.0;               // o "recente" de cada tipo cai 1 a cada tantos minutos
+		public int hourlyCap = 200;                     // máximo de XP de debuffs por hora de jogo (72000 ticks)
+		public Map<String, DebuffXpType> types = defaultTypes();
+
+		static Map<String, DebuffXpType> defaultTypes() {
+			Map<String, DebuffXpType> map = new LinkedHashMap<>();
+			map.put("wet", new DebuffXpType(5, 60));
+			map.put("cold", new DebuffXpType(12, 30));
+			map.put("fear", new DebuffXpType(15, 15));
+			map.put("thirst", new DebuffXpType(8, 60));
+			map.put("fatigue", new DebuffXpType(40, 120));
+			map.put("hunger", new DebuffXpType(60, 120));
+			return map;
+		}
+	}
+
+	/** XP base de um debuff e o tempo mínimo que o jogador precisa ter ficado nele para valer. */
+	public static final class DebuffXpType {
+		public int xp;
+		public double minSeconds;
+
+		public DebuffXpType(int xp, double minSeconds) {
+			this.xp = xp;
+			this.minSeconds = minSeconds;
+		}
+	}
+
+	/** Perda de níveis ao morrer: quanto menor o nível, maior a fração perdida. */
+	public static final class Death {
+		public boolean enabled = true;                  // false: morrer não custa níveis extras (vale o jogo normal)
+		public int fromLevel = 5;                       // neste nível ou menos perde a fração máxima
+		public int toLevel = 30;                        // neste nível ou mais perde a fração mínima
+		public double maxLoss = 1.0;                    // fração perdida em fromLevel (1.0 = 100%)
+		public double minLoss = 0.3;                    // fração perdida em toLevel (0.3 = 30%)
 	}
 
 	/** Equipamento que exige nível. Sem o nível a peça rende menos e armadura não pode ser vestida. */
@@ -219,6 +261,9 @@ public final class SurvivalNeedsConfig {
 		if (fatigue == null) fatigue = new Fatigue();
 		if (purifier == null) purifier = new Purifier();
 		if (progression == null) progression = new Progression();
+		if (progression.death == null) progression.death = new Death();
+		if (progression.debuffXp == null) progression.debuffXp = new DebuffXp();
+		if (progression.debuffXp.types == null) progression.debuffXp.types = DebuffXp.defaultTypes();
 		if (progression.equipment == null) progression.equipment = new Equipment();
 		if (progression.equipment.requirements == null) progression.equipment.requirements = Equipment.defaultRequirements();
 		if (progression.equipment.itemOverrides == null) progression.equipment.itemOverrides = new LinkedHashMap<>();
