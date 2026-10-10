@@ -1,5 +1,6 @@
 package com.ronaldo.survivalneeds;
 
+import com.ronaldo.survivalneeds.config.SurvivalNeedsConfig;
 import net.fabricmc.fabric.api.menu.v1.ExtendedMenuProvider;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
@@ -24,7 +25,7 @@ import net.minecraft.world.level.storage.ValueOutput;
  * Inventário do purificador, no estilo da fornalha:
  * <ul>
  *   <li>slot 0: garrafa de água suja (entrada)</li>
- *   <li>slot 1: carvão. É consumido na hora e vira {@link #USES_PER_COAL} usos. Só aceita outro quando os usos acabam.</li>
+ *   <li>slot 1: carvão. É consumido na hora e vira os usos configurados (purifier.usesPerCoal). Só aceita outro quando os usos acabam.</li>
  *   <li>slot 2: garrafa de água purificada (saída)</li>
  * </ul>
  * Cada garrafa purificada gasta 1 uso.
@@ -35,12 +36,21 @@ public class WaterPurifierBlockEntity extends BaseContainerBlockEntity implement
 	public static final int SLOT_OUTPUT = 2;
 	public static final int SLOT_COUNT = 3;
 
-	public static final int USES_PER_COAL = 5;
-	public static final int PURIFY_TICKS = 80; // 4 segundos por garrafa
+	/** Usos que 1 carvão dá (configuração). */
+	public static int usesPerCoal() {
+		return Math.max(1, SurvivalNeedsConfig.get().purifier.usesPerCoal);
+	}
+
+	/** Ticks para purificar 1 garrafa (configuração). */
+	public static int purifyTicks() {
+		return SurvivalNeedsConfig.ticks(SurvivalNeedsConfig.get().purifier.purifySeconds);
+	}
 
 	public static final int DATA_USES = 0;
 	public static final int DATA_PROGRESS = 1;
-	public static final int DATA_COUNT = 2;
+	public static final int DATA_MAX_USES = 2;     // para a tela desenhar a chama e o texto na proporção certa
+	public static final int DATA_PURIFY_TICKS = 3; // para a tela desenhar a seta na proporção certa
+	public static final int DATA_COUNT = 4;
 
 	private NonNullList<ItemStack> items = NonNullList.withSize(SLOT_COUNT, ItemStack.EMPTY);
 	private int uses;
@@ -50,14 +60,19 @@ public class WaterPurifierBlockEntity extends BaseContainerBlockEntity implement
 	private final ContainerData data = new ContainerData() {
 		@Override
 		public int get(int index) {
-			return index == DATA_USES ? uses : progress;
+			return switch (index) {
+				case DATA_USES -> uses;
+				case DATA_PROGRESS -> progress;
+				case DATA_MAX_USES -> usesPerCoal();
+				default -> purifyTicks();
+			};
 		}
 
 		@Override
 		public void set(int index, int value) {
 			if (index == DATA_USES) {
 				uses = value;
-			} else {
+			} else if (index == DATA_PROGRESS) {
 				progress = value;
 			}
 		}
@@ -83,7 +98,7 @@ public class WaterPurifierBlockEntity extends BaseContainerBlockEntity implement
 		ItemStack coal = purifier.items.get(SLOT_COAL);
 		if (purifier.uses == 0 && isCoal(coal)) {
 			coal.shrink(1);
-			purifier.uses = USES_PER_COAL;
+			purifier.uses = usesPerCoal();
 			changed = true;
 		}
 
@@ -93,7 +108,7 @@ public class WaterPurifierBlockEntity extends BaseContainerBlockEntity implement
 
 		if (canWork) {
 			purifier.progress++;
-			if (purifier.progress >= PURIFY_TICKS) {
+			if (purifier.progress >= purifyTicks()) {
 				purifier.progress = 0;
 				purifier.finishBottle();
 			}

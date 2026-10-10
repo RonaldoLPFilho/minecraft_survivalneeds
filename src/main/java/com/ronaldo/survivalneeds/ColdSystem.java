@@ -2,10 +2,14 @@ package com.ronaldo.survivalneeds;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import com.ronaldo.survivalneeds.config.SurvivalNeedsConfig;
+import com.ronaldo.survivalneeds.debuff.DebuffEffect;
+import com.ronaldo.survivalneeds.debuff.DebuffSystem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -14,31 +18,26 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.level.Level;
 
 /**
- * Frio. Em qualquer dos casos o jogador não corre (ver SprintLock) e o ícone aparece.
+ * Frio. Em qualquer dos casos o jogador não corre e o ícone aparece. Valores em {@code cold} na configuração.
  * <ul>
- *   <li><b>Bioma de neve</b>, sem nenhuma peça de armadura: dano forte, meio coração por segundo.</li>
- *   <li><b>Noite ao relento</b>: depois de muito tempo (10 min) à noite, com o céu totalmente aberto e sem
- *       armadura, o frio chega, mas com dano bem leve e lento.</li>
+ *   <li><b>Bioma de neve</b>, sem nenhuma peça de armadura: dano forte, por segundo.</li>
+ *   <li><b>Noite ao relento</b>: depois de muito tempo à noite, com o céu totalmente aberto e sem armadura,
+ *       o frio chega, mas com dano bem leve e lento.</li>
  * </ul>
  */
 public final class ColdSystem {
+	private static final String SOURCE = "cold";
 	private static final int CHECK_INTERVAL_TICKS = 20;
 
-	// Bioma de neve
-	private static final float BIOME_DAMAGE = 1.0f;          // meio coração, a cada verificação (1 s)
-
-	// Noite ao relento
-	private static final int NIGHT_EXPOSURE_TICKS = 10 * 60 * 20; // 10 minutos de exposição
-	private static final int NIGHT_SHELTER_RECOVERY = 2;     // abrigado/de armadura, a exposição some 2x mais rápido
-	private static final float NIGHT_DAMAGE = 1.0f;          // meio coração...
-	private static final int NIGHT_DAMAGE_INTERVAL_TICKS = 200; // ...a cada 10 segundos
-	private static final float NIGHT_MIN_HEALTH = 2.0f;      // o frio da noite nunca mata (deixa 1 coração)
-
 	private static final Set<UUID> FREEZING = new HashSet<>();
-	private static final Set<UUID> FORCED = new HashSet<>();           // ativado por comando
+	private static final Set<UUID> FORCED = new HashSet<>();                  // ativado por comando
 	private static final Map<UUID, Integer> NIGHT_EXPOSURE = new HashMap<>(); // ticks de exposição acumulada
 
 	private ColdSystem() {}
+
+	private static SurvivalNeedsConfig.Cold cfg() {
+		return SurvivalNeedsConfig.get().cold;
+	}
 
 	public static boolean isFreezing(ServerPlayer player) {
 		return FREEZING.contains(player.getUUID());
@@ -46,6 +45,7 @@ public final class ColdSystem {
 
 	/** Liga ou desliga o frio à força (comando /cold), ignorando bioma, noite e armadura. */
 	public static void setForced(ServerPlayer player, boolean forced) {
+		DebuffXp.abort(player, DebuffXp.Type.COLD); // comando não dá XP, nem ao ligar nem ao desligar
 		if (forced) {
 			FORCED.add(player.getUUID());
 		} else {
@@ -58,9 +58,12 @@ public final class ColdSystem {
 		if (player.tickCount % CHECK_INTERVAL_TICKS == 0) {
 			refresh(player);
 		}
+		// Com frio o jogador não corre
+		DebuffSystem.set(player, SOURCE, isFreezing(player), () -> List.of(new DebuffEffect.SprintBlock()));
 	}
 
 	private static void refresh(ServerPlayer player) {
+		SurvivalNeedsConfig.Cold cfg = cfg();
 		UUID id = player.getUUID();
 		boolean active = !player.isCreative() && !player.isSpectator() && !player.isDeadOrDying();
 		boolean unarmored = !hasAnyArmor(player);
@@ -74,13 +77,16 @@ public final class ColdSystem {
 			FREEZING.add(id);
 
 			if (biomeCold || forced) {
-				player.hurtServer(player.level(), player.level().damageSources().freeze(), BIOME_DAMAGE);
-			} else if (player.tickCount % NIGHT_DAMAGE_INTERVAL_TICKS == 0
-				&& player.getHealth() > NIGHT_MIN_HEALTH) {
-				player.hurtServer(player.level(), player.level().damageSources().freeze(), NIGHT_DAMAGE);
+				player.hurtServer(player.level(), player.level().damageSources().freeze(), (float) cfg.biomeDamage);
+			} else if (player.tickCount % SurvivalNeedsConfig.ticks(cfg.nightDamageIntervalSeconds) == 0
+				&& player.getHealth() > cfg.nightMinHealth) {
+				player.hurtServer(player.level(), player.level().damageSources().freeze(), (float) cfg.nightDamage);
 			}
 
 			if (!wasCold) {
+				if (!forced) {
+					DebuffXp.begin(player, DebuffXp.Type.COLD);
+				}
 				String message = biomeCold || forced
 					? "Você está com frio! Vista uma armadura."
 					: "O frio da noite te alcançou! Vista uma armadura ou procure abrigo.";
@@ -88,6 +94,13 @@ public final class ColdSystem {
 			}
 		} else {
 			FREEZING.remove(id);
+			if (wasCold) {
+				if (active) {
+					DebuffXp.recover(player, DebuffXp.Type.COLD);
+				} else {
+					DebuffXp.abort(player, DebuffXp.Type.COLD);
+				}
+			}
 		}
 	}
 
@@ -97,22 +110,24 @@ public final class ColdSystem {
 	 * De dia a exposição fica parada; à noite, abrigado ou de armadura, ela diminui.
 	 */
 	private static boolean updateNightExposure(ServerPlayer player, boolean unarmored) {
+		SurvivalNeedsConfig.Cold cfg = cfg();
 		UUID id = player.getUUID();
 		ServerLevel level = player.level();
 		if (level.dimension() != Level.OVERWORLD || !level.isDarkOutside()) {
 			return false; // de dia (ou em outra dimensão) a contagem fica parada
 		}
 
+		int needed = SurvivalNeedsConfig.ticks(cfg.nightExposureSeconds);
 		boolean openSky = level.canSeeSky(BlockPos.containing(player.getEyePosition()));
 		int exposure = NIGHT_EXPOSURE.getOrDefault(id, 0);
 		if (openSky && unarmored) {
-			exposure = Math.min(NIGHT_EXPOSURE_TICKS, exposure + CHECK_INTERVAL_TICKS);
+			exposure = Math.min(needed, exposure + CHECK_INTERVAL_TICKS);
 		} else {
-			exposure = Math.max(0, exposure - CHECK_INTERVAL_TICKS * NIGHT_SHELTER_RECOVERY);
+			exposure = Math.max(0, exposure - (int) Math.round(CHECK_INTERVAL_TICKS * cfg.nightShelterRecovery));
 		}
 		NIGHT_EXPOSURE.put(id, exposure);
 
-		return openSky && unarmored && exposure >= NIGHT_EXPOSURE_TICKS;
+		return openSky && unarmored && exposure >= needed;
 	}
 
 	private static boolean isInColdBiome(ServerPlayer player) {

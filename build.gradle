@@ -3,11 +3,17 @@ plugins {
 	id 'maven-publish'
 }
 
+repositories {
+	// Trinkets Updated (espaços de acessório): https://maven.nucleoid.xyz
+	maven { url = "https://maven.nucleoid.xyz/releases" }
+}
+
 dependencies {
 	// As versões ficam em gradle.properties
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
 	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+	implementation "eu.pb4:trinkets:${project.trinkets_version}"
 }
 
 processResources {

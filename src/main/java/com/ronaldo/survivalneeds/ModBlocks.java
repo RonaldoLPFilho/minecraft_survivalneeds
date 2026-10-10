@@ -14,6 +14,9 @@ public final class ModBlocks {
 	public static final Block WATER_PURIFIER = register("water_purifier", props ->
 		new WaterPurifierBlock(props.strength(2.5f).sound(SoundType.WOOD)));
 
+	public static final Block AMULET_TABLE = register("amulet_table", props ->
+		new AmuletTableBlock(props.strength(2.5f).sound(SoundType.WOOD).noOcclusion().lightLevel(state -> 7)));
+
 	private ModBlocks() {}
 
 	private static Block register(String name, Function<BlockBehaviour.Properties, Block> factory) {

@@ -1,0 +1,18 @@
+{
+	"required": true,
+	"package": "com.ronaldo.survivalneeds.mixin",
+	"compatibilityLevel": "JAVA_25",
+	"mixins": [
+		"ArmorSlotMixin",
+		"BlockItemMixin",
+		"EquippableMixin",
+		"FoodDataMixin",
+		"LivingEntityMixin",
+		"PlayerMixin",
+		"ServerPlayerMixin",
+		"SpawnPlacementsInvoker"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}

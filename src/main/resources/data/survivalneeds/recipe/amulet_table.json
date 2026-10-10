@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": ["IBI", "LHL", "SSS"],
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "B": "minecraft:book",
+    "L": "minecraft:lapis_lazuli",
+    "H": "survivalneeds:monster_heart",
+    "S": "minecraft:cobblestone"
+  },
+  "result": { "id": "survivalneeds:amulet_table", "count": 1 }
+}

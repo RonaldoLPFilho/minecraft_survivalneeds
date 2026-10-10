@@ -10,6 +10,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.SpawnEggItem;
 import net.minecraft.world.item.component.Consumables;
 
 public final class ModItems {
@@ -21,6 +22,26 @@ public final class ModItems {
 
 	public static final Item WATER_PURIFIER = register("water_purifier", props ->
 		new BlockItem(ModBlocks.WATER_PURIFIER, props.useBlockDescriptionPrefix()));
+
+	public static final Item MONSTER_HEART = register("monster_heart", props ->
+		new MonsterHeartItem(props
+			.stacksTo(16)
+			.component(DataComponents.CONSUMABLE, Consumables.DEFAULT_FOOD)));
+
+	public static final Item AMULET = register("amulet", AmuletItem::new);
+
+	public static final Item AMULET_TABLE = register("amulet_table", props ->
+		new BlockItem(ModBlocks.AMULET_TABLE, props.useBlockDescriptionPrefix()));
+
+	public static final Item CURSED_DART = register("cursed_dart", Item::new);
+
+	public static final Item CURSE_FRAGMENT = register("curse_fragment", Item::new);
+
+	public static final Item PRINCESS_BRUBIN_SPAWN_EGG = register("princess_brubin_spawn_egg", props ->
+		new SpawnEggItem(props.spawnEgg(ModEntities.PRINCESS_BRUBIN)));
+
+	public static final Item CURSE_SPECTER_SPAWN_EGG = register("curse_specter_spawn_egg", props ->
+		new SpawnEggItem(props.spawnEgg(ModEntities.CURSE_SPECTER)));
 
 	private ModItems() {}
 
