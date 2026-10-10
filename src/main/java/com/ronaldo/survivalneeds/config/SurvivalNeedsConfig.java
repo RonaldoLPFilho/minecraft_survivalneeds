@@ -6,6 +6,8 @@ import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -34,6 +36,7 @@ public final class SurvivalNeedsConfig {
 	public Hunger hunger = new Hunger();
 	public Fatigue fatigue = new Fatigue();
 	public Purifier purifier = new Purifier();
+	public Progression progression = new Progression();
 
 	/** Sede. A barra tem sempre 20 pontos (10 gotas). */
 	public static final class Thirst {
@@ -141,6 +144,37 @@ public final class SurvivalNeedsConfig {
 		public double purifySeconds = 4.0;              // tempo para purificar 1 garrafa
 	}
 
+	/** Progressão por XP: o nível do jogador libera equipamento forte. */
+	public static final class Progression {
+		public boolean enabled = true;                  // false desliga toda a progressão
+		public Equipment equipment = new Equipment();
+	}
+
+	/** Equipamento que exige nível. Sem o nível a peça rende menos e armadura não pode ser vestida. */
+	public static final class Equipment {
+		public double penaltyStrength = 1.2;            // penalidade = força x (nível pedido - seu nível) / nível pedido
+		public double maxPenalty = 0.95;                // a peça nunca perde mais que isto (0.95 = 95%)
+		public Map<String, Integer> requirements = defaultRequirements();  // nível pedido por material
+		public Map<String, Integer> itemOverrides = new LinkedHashMap<>(); // nível pedido por id de item, ex.: "mod:espada": 12
+
+		static Map<String, Integer> defaultRequirements() {
+			Map<String, Integer> map = new LinkedHashMap<>();
+			map.put("leather", 0);
+			map.put("wood", 0);
+			map.put("stone", 3);
+			map.put("chainmail", 3);
+			map.put("gold", 5);
+			map.put("copper", 5);
+			map.put("iron", 7);
+			map.put("diamond", 15);
+			map.put("netherite", 30);
+			map.put("trident", 15);
+			map.put("elytra", 20);
+			map.put("mace", 20);
+			return map;
+		}
+	}
+
 	public static SurvivalNeedsConfig get() {
 		return instance;
 	}
@@ -184,5 +218,9 @@ public final class SurvivalNeedsConfig {
 		if (hunger == null) hunger = new Hunger();
 		if (fatigue == null) fatigue = new Fatigue();
 		if (purifier == null) purifier = new Purifier();
+		if (progression == null) progression = new Progression();
+		if (progression.equipment == null) progression.equipment = new Equipment();
+		if (progression.equipment.requirements == null) progression.equipment.requirements = Equipment.defaultRequirements();
+		if (progression.equipment.itemOverrides == null) progression.equipment.itemOverrides = new LinkedHashMap<>();
 	}
 }

@@ -25,4 +25,10 @@ public sealed interface DebuffEffect {
 
 	/** A velocidade de andar do jogador cai {@code fraction} (0.5 = metade da velocidade). */
 	record Slowdown(double fraction) implements DebuffEffect {}
+
+	/** A velocidade de mineração do jogador cai {@code fraction} (0.5 = metade da velocidade). */
+	record MiningSlowdown(double fraction) implements DebuffEffect {}
+
+	/** A armadura (e a resistência) do jogador cai {@code fraction} (0.5 = metade da proteção). */
+	record ArmorReduction(double fraction) implements DebuffEffect {}
 }

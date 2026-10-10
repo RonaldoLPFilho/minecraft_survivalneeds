@@ -49,12 +49,16 @@ public class SurvivalNeeds implements ModInitializer {
 				HungerSystem.tick(player);
 				FatigueSystem.tick(player);
 				ThirstSystem.tick(player);
+				GearSystem.tick(player);
 				DebuffSystem.tick(player); // depois de todos os sistemas: aplica os efeitos que eles pediram
 				StatusFlags.update(player);
 			}));
 
 		// Quem sai do servidor deixa de ter efeitos guardados
-		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> DebuffSystem.forget(handler.getPlayer().getUUID()));
+		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
+			DebuffSystem.forget(handler.getPlayer().getUUID());
+			EquipmentGate.forget(handler.getPlayer().getUUID());
+		});
 
 		// Molhado não consegue dormir
 		EntitySleepEvents.ALLOW_SLEEPING.register((player, pos) ->

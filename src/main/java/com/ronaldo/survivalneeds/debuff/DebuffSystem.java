@@ -26,7 +26,8 @@ import net.minecraft.server.level.ServerPlayer;
 public final class DebuffSystem {
 	private static final SprintDebuff SPRINT = new SprintDebuff();
 	private static final BuildDebuff BUILD = new BuildDebuff();
-	private static final List<DebuffHandler> HANDLERS = List.of(SPRINT, BUILD, new DamageDebuff(), new SpeedDebuff());
+	private static final List<DebuffHandler> HANDLERS = List.of(SPRINT, BUILD, new DamageDebuff(), new SpeedDebuff(),
+		new MiningDebuff(), new ArmorDebuff(), new ToughnessDebuff());
 
 	/** Efeitos pedidos por jogador: fonte -> efeitos. */
 	private static final Map<UUID, Map<String, List<DebuffEffect>>> REQUESTS = new HashMap<>();
